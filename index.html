@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>mbarrier Producer-Consumer Pipeline</title>
+  <title>m-barrier Producer-Consumer Pipeline</title>
   <style>
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -38,6 +38,7 @@
       border-radius: 8px;
       padding: 20px;
       width: 180px;
+      text-align: center;
     }
 
     .producer {
@@ -48,17 +49,16 @@
       border: 2px solid #06d6a0;
     }
 
-    .actor h2 {
+    .producer h2 {
+      color: #ffd166;
       margin: 0 0 10px 0;
       font-size: 16px;
     }
 
-    .producer h2 {
-      color: #ffd166;
-    }
-
     .consumer h2 {
       color: #06d6a0;
+      margin: 0 0 10px 0;
+      font-size: 16px;
     }
 
     .status {
@@ -69,7 +69,7 @@
 
     .buffer-container {
       display: flex;
-      gap: 20px;
+      gap: 25px;
       justify-content: center;
       flex: 1;
     }
@@ -79,7 +79,7 @@
       border: 2px solid #4a5568;
       border-radius: 8px;
       padding: 15px;
-      width: 160px;
+      width: 170px;
       transition: all 0.3s ease;
     }
 
@@ -87,12 +87,13 @@
       margin: 0 0 15px 0;
       color: #ffd166;
       font-size: 14px;
+      text-align: center;
     }
 
     .barrier {
       font-size: 12px;
-      padding: 8px;
-      margin: 8px 0;
+      padding: 10px;
+      margin: 10px 0;
       border-radius: 4px;
       text-align: center;
       transition: all 0.3s ease;
@@ -175,16 +176,20 @@
       color: #76c7ff;
     }
 
-    .arrow {
-      font-size: 32px;
-      color: #ffd166;
+    .step-info ul {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+
+    .step-info li {
+      margin: 5px 0;
     }
   </style>
 </head>
 
 <body>
   <div class="container">
-    <h1>m-barrier Producer-Consumer Pipeline</h1>
+    <h1>TMA/WGMMA m-barrier Pipeline (QSIZE=2)</h1>
 
     <div class="controls">
       <button onclick="nextStep()">Next Step →</button>
@@ -202,13 +207,13 @@
       <div class="buffer-container">
         <div class="buffer" id="buf0">
           <h3>Buffer 0</h3>
-          <div class="barrier idle" id="barrierA0">Load Barrier: Idle</div>
-          <div class="barrier idle" id="barrierB0">Store Barrier: Idle</div>
+          <div class="barrier idle" id="load0">Load: Idle</div>
+          <div class="barrier idle" id="store0">Store: Idle</div>
         </div>
         <div class="buffer" id="buf1">
           <h3>Buffer 1</h3>
-          <div class="barrier idle" id="barrierA1">Load Barrier: Idle</div>
-          <div class="barrier idle" id="barrierB1">Store Barrier: Idle</div>
+          <div class="barrier idle" id="load1">Load: Idle</div>
+          <div class="barrier idle" id="store1">Store: Idle</div>
         </div>
       </div>
 
@@ -220,9 +225,7 @@
       </div>
     </div>
 
-    <div class="step-info" id="stepInfo">
-      <strong>Initial State:</strong> Both buffers empty. Producer and consumer idle.
-    </div>
+    <div class="step-info" id="stepInfo"></div>
   </div>
 
   <script>
@@ -234,32 +237,32 @@
         buf1: {class: "", load: "Idle", store: "Idle"}
       },
       {
-        step: 1, prod: "Loading Buffer 0", cons: "Waiting on Load Barrier 0",
-        info: "Producer starts TMA transfer to Buffer 0. Consumer stalls until load completes.",
+        step: 1, prod: "TMA Load → Buffer 0", cons: "Waiting on Load Barrier 0",
+        info: "<strong>Producer:</strong> Issues async TMA transfer to fill Buffer 0.<br><strong>Consumer:</strong> Stalled on Load Barrier 0 (waiting for data).",
         buf0: {class: "loading", load: "Waiting", store: "Idle"},
         buf1: {class: "", load: "Idle", store: "Idle"}
       },
       {
-        step: 2, prod: "Loading Buffer 1", cons: "Computing on Buffer 0",
-        info: "Load Barrier 0 signaled → Buffer 0 ready. Consumer starts compute. Producer moves to Buffer 1.",
-        buf0: {class: "ready", load: "Signaled", store: "Waiting"},
+        step: 2, prod: "TMA Load → Buffer 1", cons: "WGMMA on Buffer 0",
+        info: "<strong>Load Barrier 0 → Signaled</strong>: Data ready.<br><strong>Consumer:</strong> Unblocks and starts compute on Buffer 0.<br><strong>Producer:</strong> Immediately starts loading Buffer 1 (overlap).",
+        buf0: {class: "computing", load: "Signaled", store: "Waiting"},
         buf1: {class: "loading", load: "Waiting", store: "Idle"}
       },
       {
-        step: 3, prod: "Waiting on Store Barrier 0", cons: "Computing on Buffer 1",
-        info: "Buffer 0 in use by consumer. Producer cannot reuse it until Store Barrier 0 is signaled.",
-        buf0: {class: "computing", load: "Signaled", store: "Waiting"},
+        step: 3, prod: "Waiting on Store Barrier 0", cons: "WGMMA on Buffer 1",
+        info: "<strong>Consumer:</strong> Finished Buffer 0 → <strong>Store Barrier 0 → Signaled</strong>. Now computing on Buffer 1.<br><strong>Producer:</strong> Sees Store Barrier 0 signaled → can safely reload Buffer 0.",
+        buf0: {class: "ready", load: "Signaled", store: "Signaled"},  // FIXED: Not computing, store barrier signaled
+        buf1: {class: "computing", load: "Signaled", store: "Waiting"}  // FIXED: This is the active compute buffer
+      },
+      {
+        step: 4, prod: "TMA Load → Buffer 0", cons: "Waiting on Load Barrier 1",
+        info: "<strong>Producer:</strong> Reloads Buffer 0 while consumer computes on Buffer 1.<br><strong>Load Barrier 1 → Signaled</strong>: Consumer unblocks and starts Buffer 1 compute.",
+        buf0: {class: "loading", load: "Waiting", store: "Signaled"},
         buf1: {class: "ready", load: "Signaled", store: "Waiting"}
       },
       {
-        step: 4, prod: "Reloading Buffer 0", cons: "Waiting on Load Barrier 1",
-        info: "Consumer signaled Store Barrier 0 → Buffer 0 is free. Producer reloads it while consumer moves to Buffer 1.",
-        buf0: {class: "loading", load: "Waiting", store: "Signaled"},
-        buf1: {class: "computing", load: "Signaled", store: "Waiting"}
-      },
-      {
-        step: 5, prod: "Loading Buffer 1", cons: "Computing on Buffer 0",
-        info: "Ping-pong continues. Barriers alternate between waiting (stall) and signaled (ready).",
+        step: 5, prod: "TMA Load → Buffer 1", cons: "WGMMA on Buffer 0",
+        info: "<strong>Pipeline Steady State:</strong> Continuous ping-pong. Barriers alternate between waiting (stall) and signaled (ready) every cycle.",
         buf0: {class: "computing", load: "Signaled", store: "Waiting"},
         buf1: {class: "loading", load: "Waiting", store: "Signaled"}
       }
@@ -272,20 +275,19 @@
       document.getElementById('stepNum').textContent = s.step;
       document.getElementById('prodStatus').textContent = s.prod;
       document.getElementById('consStatus').textContent = s.cons;
-      document.getElementById('stepInfo').innerHTML = `<strong>Step ${s.step}:</strong> ${s.info}`;
+      document.getElementById('stepInfo').innerHTML = s.info;
 
-      // Update buffers
       ['buf0', 'buf1'].forEach((bufId, idx) => {
         const buf = document.getElementById(bufId);
         const config = s[bufId];
         buf.className = 'buffer ' + config.class;
 
-        const loadBar = document.getElementById('barrierA' + idx);
-        loadBar.textContent = `Load Barrier: ${config.load}`;
+        const loadBar = document.getElementById('load' + idx);
+        loadBar.textContent = `Load: ${config.load}`;
         loadBar.className = 'barrier ' + config.load.toLowerCase();
 
-        const storeBar = document.getElementById('barrierB' + idx);
-        storeBar.textContent = `Store Barrier: ${config.store}`;
+        const storeBar = document.getElementById('store' + idx);
+        storeBar.textContent = `Store: ${config.store}`;
         storeBar.className = 'barrier ' + config.store.toLowerCase();
       });
     }
@@ -295,7 +297,6 @@
       updateDisplay();
     }
 
-    // Initial render
     updateDisplay();
   </script>
 </body>
