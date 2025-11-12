@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>mbarrier Producer-Consumer Pipeline</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: #76c7ff;
+      font-size: 22px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .pipeline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 30px;
+      margin: 40px 0;
+    }
+
+    .actor {
+      background: #1a1a2e;
+      border-radius: 8px;
+      padding: 20px;
+      width: 180px;
+    }
+
+    .producer {
+      border: 2px solid #ffd166;
+    }
+
+    .consumer {
+      border: 2px solid #06d6a0;
+    }
+
+    .actor h2 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+    }
+
+    .producer h2 {
+      color: #ffd166;
+    }
+
+    .consumer h2 {
+      color: #06d6a0;
+    }
+
+    .status {
+      font-size: 14px;
+      min-height: 40px;
+      line-height: 1.4;
+    }
+
+    .buffer-container {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex: 1;
+    }
+
+    .buffer {
+      background: #16213e;
+      border: 2px solid #4a5568;
+      border-radius: 8px;
+      padding: 15px;
+      width: 160px;
+      transition: all 0.3s ease;
+    }
+
+    .buffer h3 {
+      margin: 0 0 15px 0;
+      color: #ffd166;
+      font-size: 14px;
+    }
+
+    .barrier {
+      font-size: 12px;
+      padding: 8px;
+      margin: 8px 0;
+      border-radius: 4px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .barrier.idle {
+      background: #2d3748;
+      color: #a0aec0;
+    }
+
+    .barrier.waiting {
+      background: #ef476f;
+      color: #fff;
+      font-weight: 600;
+      animation: blink 1s infinite;
+    }
+
+    .barrier.signaled {
+      background: #06d6a0;
+      color: #000;
+      font-weight: 600;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.7;
+      }
+    }
+
+    .buffer.loading {
+      border-color: #ffd166;
+      box-shadow: 0 0 15px rgba(255, 209, 102, 0.3);
+    }
+
+    .buffer.computing {
+      border-color: #06d6a0;
+      box-shadow: 0 0 15px rgba(6, 214, 160, 0.3);
+    }
+
+    .buffer.ready {
+      border-color: #76c7ff;
+      background: rgba(118, 199, 255, 0.1);
+    }
+
+    .controls {
+      text-align: center;
+      margin: 30px 0;
+    }
+
+    button {
+      background: #9f7aea;
+      color: #fff;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background: #8b5cf6;
+    }
+
+    .step-info {
+      margin-top: 20px;
+      padding: 20px;
+      background: #1a1a2e;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .step-info strong {
+      color: #76c7ff;
+    }
+
+    .arrow {
+      font-size: 32px;
+      color: #ffd166;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>m-barrier Producer-Consumer Pipeline</h1>
+
+    <div class="controls">
+      <button onclick="nextStep()">Next Step →</button>
+      <span style="margin-left: 20px; color: #76c7ff;">Step: <span id="stepNum">0</span></span>
+    </div>
+
+    <div class="pipeline">
+      <div class="actor producer">
+        <h2>Producer (TMA)</h2>
+        <div class="status" id="prodStatus">Idle</div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <div class="buffer-container">
+        <div class="buffer" id="buf0">
+          <h3>Buffer 0</h3>
+          <div class="barrier idle" id="barrierA0">Load Barrier: Idle</div>
+          <div class="barrier idle" id="barrierB0">Store Barrier: Idle</div>
+        </div>
+        <div class="buffer" id="buf1">
+          <h3>Buffer 1</h3>
+          <div class="barrier idle" id="barrierA1">Load Barrier: Idle</div>
+          <div class="barrier idle" id="barrierB1">Store Barrier: Idle</div>
+        </div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <div class="actor consumer">
+        <h2>Consumer (WGMMA)</h2>
+        <div class="status" id="consStatus">Idle</div>
+      </div>
+    </div>
+
+    <div class="step-info" id="stepInfo">
+      <strong>Initial State:</strong> Both buffers empty. Producer and consumer idle.
+    </div>
+  </div>
+
+  <script>
+    const steps = [
+      {
+        step: 0, prod: "Idle", cons: "Idle",
+        info: "Both buffers empty. Producer and consumer idle.",
+        buf0: {class: "", load: "Idle", store: "Idle"},
+        buf1: {class: "", load: "Idle", store: "Idle"}
+      },
+      {
+        step: 1, prod: "Loading Buffer 0", cons: "Waiting on Load Barrier 0",
+        info: "Producer starts TMA transfer to Buffer 0. Consumer stalls until load completes.",
+        buf0: {class: "loading", load: "Waiting", store: "Idle"},
+        buf1: {class: "", load: "Idle", store: "Idle"}
+      },
+      {
+        step: 2, prod: "Loading Buffer 1", cons: "Computing on Buffer 0",
+        info: "Load Barrier 0 signaled → Buffer 0 ready. Consumer starts compute. Producer moves to Buffer 1.",
+        buf0: {class: "ready", load: "Signaled", store: "Waiting"},
+        buf1: {class: "loading", load: "Waiting", store: "Idle"}
+      },
+      {
+        step: 3, prod: "Waiting on Store Barrier 0", cons: "Computing on Buffer 1",
+        info: "Buffer 0 in use by consumer. Producer cannot reuse it until Store Barrier 0 is signaled.",
+        buf0: {class: "computing", load: "Signaled", store: "Waiting"},
+        buf1: {class: "ready", load: "Signaled", store: "Waiting"}
+      },
+      {
+        step: 4, prod: "Reloading Buffer 0", cons: "Waiting on Load Barrier 1",
+        info: "Consumer signaled Store Barrier 0 → Buffer 0 is free. Producer reloads it while consumer moves to Buffer 1.",
+        buf0: {class: "loading", load: "Waiting", store: "Signaled"},
+        buf1: {class: "computing", load: "Signaled", store: "Waiting"}
+      },
+      {
+        step: 5, prod: "Loading Buffer 1", cons: "Computing on Buffer 0",
+        info: "Ping-pong continues. Barriers alternate between waiting (stall) and signaled (ready).",
+        buf0: {class: "computing", load: "Signaled", store: "Waiting"},
+        buf1: {class: "loading", load: "Waiting", store: "Signaled"}
+      }
+    ];
+
+    let currentStep = 0;
+
+    function updateDisplay() {
+      const s = steps[currentStep];
+      document.getElementById('stepNum').textContent = s.step;
+      document.getElementById('prodStatus').textContent = s.prod;
+      document.getElementById('consStatus').textContent = s.cons;
+      document.getElementById('stepInfo').innerHTML = `<strong>Step ${s.step}:</strong> ${s.info}`;
+
+      // Update buffers
+      ['buf0', 'buf1'].forEach((bufId, idx) => {
+        const buf = document.getElementById(bufId);
+        const config = s[bufId];
+        buf.className = 'buffer ' + config.class;
+
+        const loadBar = document.getElementById('barrierA' + idx);
+        loadBar.textContent = `Load Barrier: ${config.load}`;
+        loadBar.className = 'barrier ' + config.load.toLowerCase();
+
+        const storeBar = document.getElementById('barrierB' + idx);
+        storeBar.textContent = `Store Barrier: ${config.store}`;
+        storeBar.className = 'barrier ' + config.store.toLowerCase();
+      });
+    }
+
+    function nextStep() {
+      currentStep = (currentStep + 1) % steps.length;
+      updateDisplay();
+    }
+
+    // Initial render
+    updateDisplay();
+  </script>
+</body>
+
+</html>
