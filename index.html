@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>m-barrier Producer-Consumer Pipeline</title>
+  <title>TMA/WGMMA Async Pipeline with mbarrier</title>
   <style>
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -184,16 +184,48 @@
     .step-info li {
       margin: 5px 0;
     }
+
+    .step-info code {
+      background: #2d3748;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 12px;
+      color: #ffd166;
+    }
+
+    .phase-label {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .phase-prologue {
+      background: #9f7aea;
+      color: #fff;
+    }
+
+    .phase-mainloop {
+      background: #06d6a0;
+      color: #000;
+    }
   </style>
 </head>
 
 <body>
   <div class="container">
-    <h1>TMA/WGMMA m-barrier Pipeline (QSIZE=2)</h1>
+    <h1>TMA/WGMMA Async Pipeline with mbarrier (QSIZE=2)</h1>
+    <p style="text-align: center; color: #a0aec0; margin-bottom: 25px; font-size: 13px;">
+      Key insight: Producer issues <code style="color: #ffd166;">cp.async.bulk</code> to ALL buffers back-to-back during prefetch (no waiting).<br>
+      Synchronization via <code style="color: #06d6a0;">mbarrier</code> with <code>::complete_tx</code> — TMA hardware auto-signals on completion.
+    </p>
 
     <div class="controls">
       <button onclick="nextStep()">Next Step →</button>
-      <span style="margin-left: 20px; color: #76c7ff;">Step: <span id="stepNum">0</span></span>
+      <span style="margin-left: 20px; color: #76c7ff;">Step: <span id="stepNum">0</span>/7</span>
     </div>
 
     <div class="pipeline">
@@ -231,38 +263,50 @@
   <script>
     const steps = [
       {
-        step: 0, prod: "Idle", cons: "Idle",
-        info: "Both buffers empty. Producer and consumer idle.",
+        step: 0, prod: "Idle", cons: "Idle", phase: "prologue",
+        info: "<span class='phase-label phase-prologue'>PROLOGUE</span><br><strong>Initial State:</strong> Both buffers empty. Producer ready to begin prefetch phase. Consumer blocked, waiting for data.",
         buf0: {class: "", load: "Idle", store: "Idle"},
         buf1: {class: "", load: "Idle", store: "Idle"}
       },
       {
-        step: 1, prod: "TMA Load → Buffer 0", cons: "Waiting on Load Barrier 0",
-        info: "<strong>Producer:</strong> Issues async TMA transfer to fill Buffer 0.<br><strong>Consumer:</strong> Stalled on Load Barrier 0 (waiting for data).",
+        step: 1, prod: "cp.async.bulk → Buf0", cons: "Blocked (Prologue)", phase: "prologue",
+        info: "<span class='phase-label phase-prologue'>PROLOGUE</span><br><strong>Prefetch 1/2:</strong> Producer issues <code>cp.async.bulk</code> to Buffer 0. This is <em>non-blocking</em> — producer immediately continues without waiting for TMA completion.",
         buf0: {class: "loading", load: "Waiting", store: "Idle"},
         buf1: {class: "", load: "Idle", store: "Idle"}
       },
       {
-        step: 2, prod: "TMA Load → Buffer 1", cons: "WGMMA on Buffer 0",
-        info: "<strong>Load Barrier 0 → Signaled</strong>: Data ready.<br><strong>Consumer:</strong> Unblocks and starts compute on Buffer 0.<br><strong>Producer:</strong> Immediately starts loading Buffer 1 (overlap).",
-        buf0: {class: "computing", load: "Signaled", store: "Waiting"},
+        step: 2, prod: "cp.async.bulk → Buf1", cons: "Blocked (Prologue)", phase: "prologue",
+        info: "<span class='phase-label phase-prologue'>PROLOGUE</span><br><strong>Prefetch 2/2:</strong> Producer immediately issues <code>cp.async.bulk</code> to Buffer 1 — <em>back-to-back, no wait between loads</em>. Both TMA transfers now in-flight. Consumer still blocked.",
+        buf0: {class: "loading", load: "Waiting", store: "Idle"},
         buf1: {class: "loading", load: "Waiting", store: "Idle"}
       },
       {
-        step: 3, prod: "Waiting on Store Barrier 0", cons: "WGMMA on Buffer 1",
-        info: "<strong>Consumer:</strong> Finished Buffer 0 → <strong>Store Barrier 0 → Signaled</strong>. Now computing on Buffer 1.<br><strong>Producer:</strong> Sees Store Barrier 0 signaled → can safely reload Buffer 0.",
-        buf0: {class: "ready", load: "Signaled", store: "Signaled"},  // FIXED: Not computing, store barrier signaled
-        buf1: {class: "computing", load: "Signaled", store: "Waiting"}  // FIXED: This is the active compute buffer
+        step: 3, prod: "Prefetch Done", cons: "consumer_wait(buf0)", phase: "prologue",
+        info: "<span class='phase-label phase-prologue'>PROLOGUE → MAINLOOP</span><br><strong>Transition:</strong> All prefetch loads issued. Consumer calls <code>consumer_wait(buf0)</code>, blocking on mbarrier until TMA signals <code>::complete_tx</code>.",
+        buf0: {class: "loading", load: "Waiting", store: "Idle"},
+        buf1: {class: "loading", load: "Waiting", store: "Idle"}
       },
       {
-        step: 4, prod: "TMA Load → Buffer 0", cons: "Waiting on Load Barrier 1",
-        info: "<strong>Producer:</strong> Reloads Buffer 0 while consumer computes on Buffer 1.<br><strong>Load Barrier 1 → Signaled</strong>: Consumer unblocks and starts Buffer 1 compute.",
-        buf0: {class: "loading", load: "Waiting", store: "Signaled"},
-        buf1: {class: "ready", load: "Signaled", store: "Waiting"}
+        step: 4, prod: "producer_acquire(buf0)", cons: "WGMMA on Buffer 0", phase: "mainloop",
+        info: "<span class='phase-label phase-mainloop'>MAINLOOP</span><br><strong>First Iteration:</strong> TMA completes → mbarrier auto-signals → <strong>Load Barrier 0 = Signaled</strong>. Consumer unblocks, starts WGMMA. Producer calls <code>producer_acquire(buf0)</code> to check if buffer can be reused.",
+        buf0: {class: "computing", load: "Signaled", store: "Waiting"},
+        buf1: {class: "ready", load: "Signaled", store: "Idle"}
       },
       {
-        step: 5, prod: "TMA Load → Buffer 1", cons: "WGMMA on Buffer 0",
-        info: "<strong>Pipeline Steady State:</strong> Continuous ping-pong. Barriers alternate between waiting (stall) and signaled (ready) every cycle.",
+        step: 5, prod: "Waiting (buf0 in use)", cons: "consumer_release(buf0) → WGMMA Buf1", phase: "mainloop",
+        info: "<span class='phase-label phase-mainloop'>MAINLOOP</span><br><strong>Handoff:</strong> Consumer finishes Buffer 0, calls <code>consumer_release(buf0)</code> → <strong>Store Barrier 0 = Signaled</strong>. Consumer immediately starts WGMMA on Buffer 1.",
+        buf0: {class: "ready", load: "Signaled", store: "Signaled"},
+        buf1: {class: "computing", load: "Signaled", store: "Waiting"}
+      },
+      {
+        step: 6, prod: "cp.async.bulk → Buf0", cons: "WGMMA on Buffer 1", phase: "mainloop",
+        info: "<span class='phase-label phase-mainloop'>MAINLOOP — STEADY STATE</span><br><strong>True Overlap:</strong> Producer sees Store Barrier 0 signaled → buffer free. Issues <code>cp.async.bulk</code> to reload Buffer 0 <em>while</em> consumer computes on Buffer 1. Memory latency hidden!",
+        buf0: {class: "loading", load: "Waiting", store: "Idle"},
+        buf1: {class: "computing", load: "Signaled", store: "Waiting"}
+      },
+      {
+        step: 7, prod: "cp.async.bulk → Buf1", cons: "WGMMA on Buffer 0", phase: "mainloop",
+        info: "<span class='phase-label phase-mainloop'>MAINLOOP — STEADY STATE</span><br><strong>Ping-Pong:</strong> Roles swap. Producer reloads Buffer 1 while consumer computes on Buffer 0. Pipeline runs indefinitely with full overlap.",
         buf0: {class: "computing", load: "Signaled", store: "Waiting"},
         buf1: {class: "loading", load: "Waiting", store: "Signaled"}
       }
