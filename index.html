@@ -10,29 +10,33 @@
       font-family: system-ui, -apple-system, sans-serif;
       background: #0d1117;
       color: #e6edf3;
-      padding: 40px;
+      padding: 30px;
       margin: 0;
     }
 
     .container {
-      max-width: 1000px;
+      max-width: 900px;
       margin: 0 auto;
     }
 
     h1 {
       color: #58a6ff;
-      font-size: 20px;
-      margin-bottom: 8px;
+      font-size: 18px;
+      margin-bottom: 5px;
+      text-align: center;
     }
 
     .subtitle {
       color: #8b949e;
-      font-size: 14px;
-      margin-bottom: 30px;
+      font-size: 13px;
+      margin-bottom: 25px;
+      text-align: center;
     }
 
+    /* Controls */
     .controls {
-      margin-bottom: 20px;
+      text-align: center;
+      margin-bottom: 25px;
     }
 
     button {
@@ -43,7 +47,7 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 14px;
-      margin-right: 10px;
+      margin: 0 5px;
     }
 
     button:hover {
@@ -52,60 +56,202 @@
 
     .step-label {
       color: #58a6ff;
-      font-size: 14px;
-      display: inline-block;
       margin-left: 15px;
     }
 
-    /* Gantt Chart */
-    .gantt {
+    /* Buffer visualization */
+    .buffers-section {
+      display: flex;
+      justify-content: center;
+      gap: 80px;
+      margin-bottom: 30px;
+    }
+
+    .buffer-wrapper {
+      text-align: center;
+    }
+
+    .buffer-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .buf0-title {
+      color: #f0883e;
+    }
+
+    .buf1-title {
+      color: #3fb950;
+    }
+
+    .buffer {
+      width: 120px;
+      height: 90px;
+      border: 2px solid #30363d;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      background: #161b22;
+    }
+
+    .buffer.active-load {
+      border-color: #f0883e;
+      box-shadow: 0 0 12px rgba(240, 136, 62, 0.3);
+    }
+
+    .buffer.active-compute {
+      border-color: #3fb950;
+      box-shadow: 0 0 12px rgba(63, 185, 80, 0.3);
+    }
+
+    .buffer.active-store {
+      border-color: #a371f7;
+      box-shadow: 0 0 12px rgba(163, 113, 247, 0.3);
+    }
+
+    .buffer-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      transition: height 0.4s ease, background 0.3s ease;
+    }
+
+    .buffer-fill.loading {
+      background: linear-gradient(0deg, #f0883e 0%, #f0883e66 100%);
+    }
+
+    .buffer-fill.has-data {
+      background: #238636;
+    }
+
+    .buffer-fill.computing {
+      background: linear-gradient(0deg, #3fb950 0%, #3fb95088 100%);
+    }
+
+    .buffer-fill.storing {
+      background: linear-gradient(0deg, #a371f7 0%, #a371f788 100%);
+    }
+
+    .buffer-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+      z-index: 1;
+    }
+
+    .buffer-status {
+      font-size: 11px;
+      color: #8b949e;
+      margin-top: 8px;
+      height: 16px;
+    }
+
+    .buffer-status.loading {
+      color: #f0883e;
+    }
+
+    .buffer-status.computing {
+      color: #3fb950;
+    }
+
+    .buffer-status.storing {
+      color: #a371f7;
+    }
+
+    /* Arrows */
+    .arrow-row {
+      display: flex;
+      justify-content: center;
+      gap: 80px;
+      margin: 8px 0;
+      font-size: 16px;
+    }
+
+    .arrow-col {
+      width: 120px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .arrow {
+      color: #30363d;
+      transition: color 0.3s, transform 0.3s;
+    }
+
+    .arrow.active-down {
+      color: #f0883e;
+      transform: scale(1.3);
+    }
+
+    .arrow.active-up {
+      color: #a371f7;
+      transform: scale(1.3);
+    }
+
+    /* Memory labels */
+    .mem-label {
+      text-align: center;
+      font-size: 11px;
+      color: #8b949e;
+      margin: 5px 0;
+    }
+
+    .mem-label.gmem {
+      color: #58a6ff;
+    }
+
+    /* Timeline */
+    .timeline-section {
       background: #161b22;
       border-radius: 8px;
-      padding: 20px;
+      padding: 15px 20px;
       margin-bottom: 20px;
     }
 
-    .gantt-row {
-      display: flex;
-      align-items: center;
-      margin-bottom: 8px;
+    .timeline-title {
+      font-size: 12px;
+      color: #8b949e;
+      margin-bottom: 12px;
     }
 
-    .gantt-label {
-      width: 120px;
-      font-size: 13px;
+    .timeline-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .timeline-label {
+      width: 100px;
+      font-size: 11px;
       color: #8b949e;
       flex-shrink: 0;
     }
 
-    .gantt-label.buf0 {
-      color: #f0883e;
-    }
-
-    .gantt-label.buf1 {
-      color: #3fb950;
-    }
-
-    .gantt-track {
+    .timeline-track {
       flex: 1;
-      height: 28px;
+      height: 22px;
       background: #21262d;
-      border-radius: 4px;
+      border-radius: 3px;
       position: relative;
-      overflow: hidden;
     }
 
-    .gantt-bar {
+    .timeline-bar {
       position: absolute;
-      top: 3px;
-      bottom: 3px;
-      border-radius: 3px;
+      top: 2px;
+      bottom: 2px;
+      border-radius: 2px;
+      font-size: 9px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
       font-weight: 600;
-      transition: all 0.3s ease;
     }
 
     .bar-load {
@@ -123,136 +269,186 @@
       color: #fff;
     }
 
-    /* Time markers */
-    .time-axis {
-      display: flex;
-      margin-left: 120px;
-      margin-bottom: 10px;
+    .time-marker {
+      position: absolute;
+      top: -4px;
+      bottom: -4px;
+      width: 2px;
+      background: #f85149;
+      z-index: 10;
+      transition: left 0.4s ease;
     }
 
-    .time-tick {
-      flex: 1;
-      text-align: center;
-      font-size: 11px;
-      color: #484f58;
-    }
-
-    /* Info box */
+    /* Info */
     .info {
       background: #161b22;
       border-radius: 8px;
-      padding: 16px 20px;
-      font-size: 14px;
+      padding: 14px 18px;
+      font-size: 13px;
       line-height: 1.6;
       border-left: 3px solid #58a6ff;
     }
 
     .info code {
       background: #21262d;
-      padding: 2px 6px;
+      padding: 1px 5px;
       border-radius: 3px;
       font-family: monospace;
+      font-size: 12px;
       color: #f0883e;
     }
 
-    .parallel-tag {
+    .tag {
+      display: inline-block;
       background: #238636;
       color: #fff;
       padding: 2px 8px;
       border-radius: 4px;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
-      margin-left: 8px;
+      margin-left: 6px;
+      vertical-align: middle;
     }
 
-    /* Legend */
-    .legend {
+    /* Warp Groups */
+    .warp-groups-section {
       display: flex;
-      gap: 20px;
+      justify-content: center;
+      gap: 40px;
       margin-bottom: 20px;
-      font-size: 13px;
     }
 
-    .legend-item {
+    .warp-group {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 10px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      background: #161b22;
+      border: 2px solid #30363d;
+      transition: all 0.3s ease;
     }
 
-    .legend-box {
-      width: 14px;
-      height: 14px;
-      border-radius: 3px;
+    .warp-group.producer.active {
+      border-color: #f0883e;
+      box-shadow: 0 0 15px rgba(240, 136, 62, 0.4);
+      background: linear-gradient(135deg, #1a1510 0%, #161b22 100%);
+    }
+
+    .warp-group.consumer.active {
+      border-color: #3fb950;
+      box-shadow: 0 0 15px rgba(63, 185, 80, 0.4);
+      background: linear-gradient(135deg, #101a12 0%, #161b22 100%);
+    }
+
+    .wg-icon {
+      font-size: 20px;
+    }
+
+    .wg-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #8b949e;
+    }
+
+    .warp-group.producer .wg-label {
+      color: #f0883e;
+    }
+
+    .warp-group.consumer .wg-label {
+      color: #3fb950;
+    }
+
+    .wg-status {
+      font-size: 10px;
+      color: #6e7681;
+      padding: 2px 6px;
+      background: #21262d;
+      border-radius: 4px;
+    }
+
+    .warp-group.producer.active .wg-status {
+      background: #f0883e;
+      color: #000;
+    }
+
+    .warp-group.consumer.active .wg-status {
+      background: #3fb950;
+      color: #000;
     }
   </style>
 </head>
 
 <body>
   <div class="container">
-    <h1>TMA/WGMMA Async Pipeline — Double Buffering</h1>
-    <p class="subtitle">Issue is instant. Execution is async. Multiple ops run in parallel on different hardware.</p>
-
-    <div class="legend">
-      <div class="legend-item">
-        <div class="legend-box" style="background:#f0883e"></div>
-        <span>Load (TMA)</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-box" style="background:#3fb950"></div>
-        <span>Compute (WGMMA)</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-box" style="background:#a371f7"></div>
-        <span>Store (TMA)</span>
-      </div>
-    </div>
+    <h1>TMA/WGMMA Async Double-Buffer Pipeline</h1>
+    <p class="subtitle">H100 Producer-Consumer Warp Groups • Issue is instant • Execution is async</p>
 
     <div class="controls">
       <button onclick="prev()">← Prev</button>
       <button onclick="next()">Next →</button>
       <button onclick="toggleAuto()" id="autoBtn">▶ Auto</button>
-      <span class="step-label">Step <span id="stepNum">0</span> / 8</span>
+      <span class="step-label">Step <span id="stepNum">0</span>/12</span>
     </div>
 
-    <div class="gantt">
-      <div class="time-axis">
-        <div class="time-tick">T0</div>
-        <div class="time-tick">T1</div>
-        <div class="time-tick">T2</div>
-        <div class="time-tick">T3</div>
-        <div class="time-tick">T4</div>
-        <div class="time-tick">T5</div>
-        <div class="time-tick">T6</div>
-        <div class="time-tick">T7</div>
-        <div class="time-tick">T8</div>
-        <div class="time-tick">T9</div>
-        <div class="time-tick">T10</div>
-        <div class="time-tick">T11</div>
+    <!-- Warp Groups Section -->
+    <div class="warp-groups-section">
+      <div class="warp-group producer" id="wg-producer">
+        <div class="wg-icon">📤</div>
+        <div class="wg-label">Producer WG</div>
+        <div class="wg-status" id="producer-status">Idle</div>
       </div>
+      <div class="warp-group consumer" id="wg-consumer">
+        <div class="wg-icon">⚡</div>
+        <div class="wg-label">Consumer WG</div>
+        <div class="wg-status" id="consumer-status">Idle</div>
+      </div>
+    </div>
 
-      <div class="gantt-row">
-        <div class="gantt-label buf0">Buf0 Load</div>
-        <div class="gantt-track" id="track-b0l"></div>
+    <div class="mem-label gmem">GMEM (Global Memory)</div>
+
+    <div class="arrow-row">
+      <div class="arrow-col"><span class="arrow" id="arr0-in">↓</span></div>
+      <div class="arrow-col"><span class="arrow" id="arr1-in">↓</span></div>
+    </div>
+
+    <div class="buffers-section">
+      <div class="buffer-wrapper">
+        <div class="buffer-title buf0-title">Buffer 0</div>
+        <div class="buffer" id="buf0">
+          <div class="buffer-fill" id="fill0"></div>
+          <div class="buffer-label" id="label0"></div>
+        </div>
+        <div class="buffer-status" id="status0">Empty</div>
       </div>
-      <div class="gantt-row">
-        <div class="gantt-label buf0">Buf0 Compute</div>
-        <div class="gantt-track" id="track-b0c"></div>
+      <div class="buffer-wrapper">
+        <div class="buffer-title buf1-title">Buffer 1</div>
+        <div class="buffer" id="buf1">
+          <div class="buffer-fill" id="fill1"></div>
+          <div class="buffer-label" id="label1"></div>
+        </div>
+        <div class="buffer-status" id="status1">Empty</div>
       </div>
-      <div class="gantt-row">
-        <div class="gantt-label buf0">Buf0 Store</div>
-        <div class="gantt-track" id="track-b0s"></div>
+    </div>
+
+    <div class="mem-label">SMEM (Shared Memory)</div>
+
+    <div class="arrow-row">
+      <div class="arrow-col"><span class="arrow" id="arr0-out">↓</span></div>
+      <div class="arrow-col"><span class="arrow" id="arr1-out">↓</span></div>
+    </div>
+
+    <div class="mem-label gmem">GMEM (Results)</div>
+
+    <div class="timeline-section">
+      <div class="timeline-title">Hardware Timeline — Producer/Consumer Warp Groups</div>
+      <div class="timeline-row">
+        <div class="timeline-label">Producer WG (TMA)</div>
+        <div class="timeline-track" id="track-tma"></div>
       </div>
-      <div class="gantt-row">
-        <div class="gantt-label buf1">Buf1 Load</div>
-        <div class="gantt-track" id="track-b1l"></div>
-      </div>
-      <div class="gantt-row">
-        <div class="gantt-label buf1">Buf1 Compute</div>
-        <div class="gantt-track" id="track-b1c"></div>
-      </div>
-      <div class="gantt-row">
-        <div class="gantt-label buf1">Buf1 Store</div>
-        <div class="gantt-track" id="track-b1s"></div>
+      <div class="timeline-row">
+        <div class="timeline-label">Consumer WG (TC)</div>
+        <div class="timeline-track" id="track-tc"></div>
       </div>
     </div>
 
@@ -260,85 +456,237 @@
   </div>
 
   <script>
-    const TOTAL_TIME = 12;
+    const TOTAL = 16;
 
     const steps = [
+      // Step 0: Kernel Launch - Initialization
       {
-        bars: [
-          {track: 'b0l', start: 0, end: 2, type: 'load'},
-          {track: 'b1l', start: 0, end: 2, type: 'load'},
-        ],
-        info: `<strong>T0:</strong> Issue <code>cp.async(buf0)</code> and <code>cp.async(buf1)</code> back-to-back.<br>Both loads start <strong>simultaneously</strong> on TMA unit.`
+        time: 0,
+        buf0: { fill: 0, cls: '', label: '', status: 'Empty', statusCls: '' },
+        buf1: { fill: 0, cls: '', label: '', status: 'Empty', statusCls: '' },
+        arrows: {},
+        tma: [],
+        tc: [],
+        producer: { active: false, status: 'Initializing...' },
+        consumer: { active: false, status: 'Waiting' },
+        info: `<strong>🚀 Kernel Launch:</strong> Thread block starts, warp groups assigned roles.<br><strong>Producer WG:</strong> Will handle TMA loads/stores<br><strong>Consumer WG:</strong> Will run WGMMA on Tensor Cores`
       },
+      // Step 1: Issue load for Buffer 0 first
       {
-        bars: [
-          {track: 'b0l', start: 0, end: 2, type: 'load'},
-          {track: 'b1l', start: 0, end: 2, type: 'load'},
-        ],
-        info: `<strong>T0-T2:</strong> Both loads executing in parallel. Thread waits on mbarrier for buf0.`
+        time: 0,
+        buf0: { fill: 20, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
+        buf1: { fill: 0, cls: '', label: '', status: 'Empty', statusCls: '' },
+        arrows: { in0: true },
+        tma: [{ start: 0, end: 2, type: 'load', label: 'Load B0' }],
+        tc: [],
+        producer: { active: true, status: 'TMA Load B0' },
+        consumer: { active: false, status: 'Waiting barrier' },
+        info: `<strong>T0:</strong> Producer WG issues <code>cp.async(buf0)</code> — instruction instant, TMA starts loading B0.<br>Consumer WG blocked on <code>barrier.wait()</code>.`
       },
+      // Step 1: Issue load for Buffer 1 (B0 already ahead)
       {
-        bars: [
-          {track: 'b0l', start: 0, end: 2, type: 'load'},
-          {track: 'b1l', start: 0, end: 2, type: 'load'},
-          {track: 'b0c', start: 2, end: 5, type: 'compute'},
+        time: 0.5,
+        buf0: { fill: 40, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
+        buf1: { fill: 15, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
+        arrows: { in0: true, in1: true },
+        tma: [
+          { start: 0, end: 2, type: 'load', label: 'Load B0' },
+          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' }
         ],
-        info: `<strong>T2:</strong> Loads complete. Issue <code>wgmma(buf0)</code>. Tensor cores start computing.`
+        tc: [],
+        producer: { active: true, status: 'TMA Load B0+B1' },
+        consumer: { active: false, status: 'Waiting barrier' },
+        info: `<strong>T0.5:</strong> Producer WG issues <code>cp.async(buf1)</code> — B1 starts loading.<br>Consumer WG still waiting on barrier.`
       },
+      // Step 2: B0 continues loading faster
       {
-        bars: [
-          {track: 'b0l', start: 0, end: 2, type: 'load'},
-          {track: 'b1l', start: 0, end: 2, type: 'load'},
-          {track: 'b0c', start: 2, end: 5, type: 'compute'},
+        time: 1.5,
+        buf0: { fill: 80, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
+        buf1: { fill: 50, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
+        arrows: { in0: true, in1: true },
+        tma: [
+          { start: 0, end: 2, type: 'load', label: 'Load B0' },
+          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' }
         ],
-        info: `<strong>T2-T5:</strong> WGMMA executing on tensor cores. Buf1 data ready, waiting.`
+        tc: [],
+        producer: { active: true, status: 'TMA in progress' },
+        consumer: { active: false, status: 'Waiting barrier' },
+        info: `<strong>T1.5:</strong> Producer WG TMA ops in progress. B0 almost ready.<br>Consumer WG blocked on <code>mbarrier.wait(buf0)</code>.`
       },
+      // Step 3: B0 ready! Start compute on B0 while B1 still loading
       {
-        bars: [
-          {track: 'b0l', start: 0, end: 2, type: 'load'},
-          {track: 'b1l', start: 0, end: 2, type: 'load'},
-          {track: 'b0c', start: 2, end: 5, type: 'compute'},
-          {track: 'b0s', start: 5, end: 7, type: 'store'},
-          {track: 'b1c', start: 5, end: 8, type: 'compute'},
+        time: 2,
+        buf0: { fill: 100, cls: 'has-data', label: 'DATA', status: 'Ready', statusCls: '' },
+        buf1: { fill: 70, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
+        arrows: { in1: true },
+        tma: [
+          { start: 0, end: 2, type: 'load', label: 'Load B0' },
+          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' }
         ],
-        info: `<strong>T5:</strong> Buf0 compute done. Issue <code>tma_store(buf0)</code> + <code>wgmma(buf1)</code>.<br><span class="parallel-tag">PARALLEL</span> Store Buf0 on TMA ∥ Compute Buf1 on Tensor Cores`
+        tc: [],
+        producer: { active: true, status: 'TMA Load B1' },
+        consumer: { active: false, status: 'Barrier released!' },
+        info: `<strong>T2:</strong> B0 load complete! Barrier signals Consumer WG.<br>Producer WG continues loading B1.`
       },
+      // Step 4: OVERLAP - Compute B0 while B1 still loading!
       {
-        bars: [
-          {track: 'b0l', start: 0, end: 2, type: 'load'},
-          {track: 'b1l', start: 0, end: 2, type: 'load'},
-          {track: 'b0c', start: 2, end: 5, type: 'compute'},
-          {track: 'b0s', start: 5, end: 7, type: 'store'},
-          {track: 'b1c', start: 5, end: 8, type: 'compute'},
-          {track: 'b0l', start: 7, end: 9, type: 'load'},
+        time: 2.3,
+        buf0: { fill: 100, cls: 'computing', label: 'WGMMA', status: 'Computing...', statusCls: 'computing' },
+        buf1: { fill: 85, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
+        arrows: { in1: true },
+        tma: [
+          { start: 0, end: 2, type: 'load', label: 'Load B0' },
+          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' }
         ],
-        info: `<strong>T7:</strong> Store Buf0 done. Issue <code>cp.async(buf0)</code> to reload.<br><span class="parallel-tag">PARALLEL</span> Load Buf0 ∥ Compute Buf1 still running`
+        tc: [{ start: 2, end: 5, type: 'compute', label: 'WGMMA B0' }],
+        producer: { active: true, status: 'TMA Load B1' },
+        consumer: { active: true, status: 'WGMMA B0' },
+        info: `<strong>T2:</strong> Consumer WG issues <code>wgmma(buf0)</code> — Tensor Cores start!<br><span class="tag">PARALLEL</span> <strong>Producer loads B1 ∥ Consumer computes B0</strong>`
       },
+      // Step 5: B1 load completes, B0 still computing
       {
-        bars: [
-          {track: 'b0l', start: 0, end: 2, type: 'load'},
-          {track: 'b1l', start: 0, end: 2, type: 'load'},
-          {track: 'b0c', start: 2, end: 5, type: 'compute'},
-          {track: 'b0s', start: 5, end: 7, type: 'store'},
-          {track: 'b1c', start: 5, end: 8, type: 'compute'},
-          {track: 'b0l', start: 7, end: 9, type: 'load'},
-          {track: 'b1s', start: 8, end: 10, type: 'store'},
+        time: 2.5,
+        buf0: { fill: 100, cls: 'computing', label: 'WGMMA', status: 'Computing...', statusCls: 'computing' },
+        buf1: { fill: 100, cls: 'has-data', label: 'DATA', status: 'Ready', statusCls: '' },
+        arrows: {},
+        tma: [
+          { start: 0, end: 2, type: 'load', label: 'Load B0' },
+          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' }
         ],
-        info: `<strong>T8:</strong> Buf1 compute done. Issue <code>tma_store(buf1)</code>.<br><span class="parallel-tag">PARALLEL</span> Store Buf1 ∥ Load Buf0 still running`
+        tc: [{ start: 2, end: 5, type: 'compute', label: 'WGMMA B0' }],
+        producer: { active: false, status: 'Idle' },
+        consumer: { active: true, status: 'WGMMA B0' },
+        info: `<strong>T2.5:</strong> Producer WG done loading. Consumer WG still computing B0.<br>Both buffers ready — perfect pipelining!`
       },
+      // Step 6: B0 compute done, start store B0 + compute B1
       {
-        bars: [
-          {track: 'b0l', start: 0, end: 2, type: 'load'},
-          {track: 'b1l', start: 0, end: 2, type: 'load'},
-          {track: 'b0c', start: 2, end: 5, type: 'compute'},
-          {track: 'b0s', start: 5, end: 7, type: 'store'},
-          {track: 'b1c', start: 5, end: 8, type: 'compute'},
-          {track: 'b0l', start: 7, end: 9, type: 'load'},
-          {track: 'b1s', start: 8, end: 10, type: 'store'},
-          {track: 'b0c', start: 9, end: 12, type: 'compute'},
-          {track: 'b1l', start: 10, end: 12, type: 'load'},
+        time: 5,
+        buf0: { fill: 100, cls: 'storing', label: 'RESULT', status: 'Storing...', statusCls: 'storing' },
+        buf1: { fill: 100, cls: 'computing', label: 'WGMMA', status: 'Computing...', statusCls: 'computing' },
+        arrows: { out0: true },
+        tma: [
+          { start: 0, end: 2, type: 'load', label: 'Load B0' },
+          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' },
+          { start: 5, end: 7, type: 'store', label: 'Store B0' }
         ],
-        info: `<strong>T9-10:</strong> Buf0 load done → <code>wgmma(buf0)</code>. Buf1 store done → <code>cp.async(buf1)</code>.<br><span class="parallel-tag">PARALLEL</span> Compute Buf0 ∥ Load Buf1 — <strong>cycle repeats!</strong>`
+        tc: [
+          { start: 2, end: 5, type: 'compute', label: 'WGMMA B0' },
+          { start: 5, end: 8, type: 'compute', label: 'WGMMA B1' }
+        ],
+        producer: { active: true, status: 'TMA Store B0' },
+        consumer: { active: true, status: 'WGMMA B1' },
+        info: `<strong>T5:</strong> Producer WG stores B0. Consumer WG starts on B1.<br><span class="tag">PARALLEL</span> Producer stores ∥ Consumer computes`
+      },
+      // Step 7: Store B0 done, reload B0 while B1 still computing
+      {
+        time: 7,
+        buf0: { fill: 40, cls: 'loading', label: '', status: 'Reloading...', statusCls: 'loading' },
+        buf1: { fill: 100, cls: 'computing', label: 'WGMMA', status: 'Computing...', statusCls: 'computing' },
+        arrows: { in0: true },
+        tma: [
+          { start: 0, end: 2, type: 'load', label: 'Load B0' },
+          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' },
+          { start: 5, end: 7, type: 'store', label: 'Store B0' },
+          { start: 7, end: 9, type: 'load', label: 'Load B0' }
+        ],
+        tc: [
+          { start: 2, end: 5, type: 'compute', label: 'WGMMA B0' },
+          { start: 5, end: 8, type: 'compute', label: 'WGMMA B1' }
+        ],
+        producer: { active: true, status: 'TMA Load B0' },
+        consumer: { active: true, status: 'WGMMA B1' },
+        info: `<strong>T7:</strong> Producer WG reloads B0. Consumer WG continues B1.<br><span class="tag">PARALLEL</span> Producer loads ∥ Consumer computes`
+      },
+      // Step 8: B1 compute done, store B1 while loading B0
+      {
+        time: 8,
+        buf0: { fill: 70, cls: 'loading', label: '', status: 'Reloading...', statusCls: 'loading' },
+        buf1: { fill: 100, cls: 'storing', label: 'RESULT', status: 'Storing...', statusCls: 'storing' },
+        arrows: { in0: true, out1: true },
+        tma: [
+          { start: 0, end: 2, type: 'load', label: 'Load B0' },
+          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' },
+          { start: 5, end: 7, type: 'store', label: 'Store B0' },
+          { start: 7, end: 9, type: 'load', label: 'Load B0' },
+          { start: 8, end: 10, type: 'store', label: 'Store B1' }
+        ],
+        tc: [
+          { start: 2, end: 5, type: 'compute', label: 'WGMMA B0' },
+          { start: 5, end: 8, type: 'compute', label: 'WGMMA B1' }
+        ],
+        producer: { active: true, status: 'TMA Load+Store' },
+        consumer: { active: false, status: 'Waiting' },
+        info: `<strong>T8:</strong> Producer WG: Load B0 + Store B1 simultaneously!<br><span class="tag">PARALLEL</span> Consumer WG waiting for next buffer`
+      },
+      // Step 9: B0 ready, start compute B0 while storing B1
+      {
+        time: 9,
+        buf0: { fill: 100, cls: 'computing', label: 'WGMMA', status: 'Computing...', statusCls: 'computing' },
+        buf1: { fill: 100, cls: 'storing', label: 'RESULT', status: 'Storing...', statusCls: 'storing' },
+        arrows: { out1: true },
+        tma: [
+          { start: 0, end: 2, type: 'load', label: 'Load B0' },
+          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' },
+          { start: 5, end: 7, type: 'store', label: 'Store B0' },
+          { start: 7, end: 9, type: 'load', label: 'Load B0' },
+          { start: 8, end: 10, type: 'store', label: 'Store B1' }
+        ],
+        tc: [
+          { start: 2, end: 5, type: 'compute', label: 'WGMMA B0' },
+          { start: 5, end: 8, type: 'compute', label: 'WGMMA B1' },
+          { start: 9, end: 12, type: 'compute', label: 'WGMMA B0' }
+        ],
+        producer: { active: true, status: 'TMA Store B1' },
+        consumer: { active: true, status: 'WGMMA B0' },
+        info: `<strong>T9:</strong> Consumer WG starts WGMMA on B0.<br><span class="tag">PARALLEL</span> Producer stores B1 ∥ Consumer computes B0`
+      },
+      // Step 10: B1 store done, reload B1 while computing B0
+      {
+        time: 10,
+        buf0: { fill: 100, cls: 'computing', label: 'WGMMA', status: 'Computing...', statusCls: 'computing' },
+        buf1: { fill: 40, cls: 'loading', label: '', status: 'Reloading...', statusCls: 'loading' },
+        arrows: { in1: true },
+        tma: [
+          { start: 0, end: 2, type: 'load', label: 'Load B0' },
+          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' },
+          { start: 5, end: 7, type: 'store', label: 'Store B0' },
+          { start: 7, end: 9, type: 'load', label: 'Load B0' },
+          { start: 8, end: 10, type: 'store', label: 'Store B1' },
+          { start: 10, end: 12, type: 'load', label: 'Load B1' }
+        ],
+        tc: [
+          { start: 2, end: 5, type: 'compute', label: 'WGMMA B0' },
+          { start: 5, end: 8, type: 'compute', label: 'WGMMA B1' },
+          { start: 9, end: 12, type: 'compute', label: 'WGMMA B0' }
+        ],
+        producer: { active: true, status: 'TMA Load B1' },
+        consumer: { active: true, status: 'WGMMA B0' },
+        info: `<strong>T10:</strong> Producer WG reloads B1. Consumer WG on B0.<br><span class="tag">PARALLEL</span> <strong>Steady state achieved!</strong>`
+      },
+      // Step 11: B0 compute done, B1 ready, swap!
+      {
+        time: 12,
+        buf0: { fill: 100, cls: 'storing', label: 'RESULT', status: 'Storing...', statusCls: 'storing' },
+        buf1: { fill: 100, cls: 'computing', label: 'WGMMA', status: 'Computing...', statusCls: 'computing' },
+        arrows: { out0: true },
+        tma: [
+          { start: 0, end: 2, type: 'load', label: 'Load B0' },
+          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' },
+          { start: 5, end: 7, type: 'store', label: 'Store B0' },
+          { start: 7, end: 9, type: 'load', label: 'Load B0' },
+          { start: 8, end: 10, type: 'store', label: 'Store B1' },
+          { start: 10, end: 12, type: 'load', label: 'Load B1' },
+          { start: 12, end: 14, type: 'store', label: 'Store B0' }
+        ],
+        tc: [
+          { start: 2, end: 5, type: 'compute', label: 'WGMMA B0' },
+          { start: 5, end: 8, type: 'compute', label: 'WGMMA B1' },
+          { start: 9, end: 12, type: 'compute', label: 'WGMMA B0' },
+          { start: 12, end: 15, type: 'compute', label: 'WGMMA B1' }
+        ],
+        producer: { active: true, status: 'TMA Store B0' },
+        consumer: { active: true, status: 'WGMMA B1' },
+        info: `<strong>T12:</strong> Producer stores B0. Consumer computes B1.<br><span class="tag">PARALLEL</span> <strong>Cycle repeats perfectly!</strong>`
       },
     ];
 
@@ -346,49 +694,64 @@
     let autoInterval = null;
 
     function render() {
+      const s = steps[current];
       document.getElementById('stepNum').textContent = current;
 
-      // Clear all tracks
-      ['b0l', 'b0c', 'b0s', 'b1l', 'b1c', 'b1s'].forEach(id => {
-        document.getElementById('track-' + id).innerHTML = '';
+      // Buffers
+      ['0', '1'].forEach(i => {
+        const buf = s['buf' + i];
+        const bufEl = document.getElementById('buf' + i);
+        const fillEl = document.getElementById('fill' + i);
+
+        bufEl.className = 'buffer' + (buf.cls === 'loading' ? ' active-load' : buf.cls === 'computing' ? ' active-compute' : buf.cls === 'storing' ? ' active-store' : '');
+        fillEl.style.height = buf.fill + '%';
+        fillEl.className = 'buffer-fill ' + buf.cls;
+        document.getElementById('label' + i).textContent = buf.label;
+        document.getElementById('status' + i).textContent = buf.status;
+        document.getElementById('status' + i).className = 'buffer-status ' + buf.statusCls;
       });
 
-      // Draw bars
-      const step = steps[current];
-      step.bars.forEach(bar => {
-        const track = document.getElementById('track-' + bar.track);
-        const div = document.createElement('div');
-        div.className = 'gantt-bar bar-' + bar.type;
-        div.style.left = (bar.start / TOTAL_TIME * 100) + '%';
-        div.style.width = ((bar.end - bar.start) / TOTAL_TIME * 100) + '%';
-        track.appendChild(div);
+      // Arrows
+      document.getElementById('arr0-in').className = 'arrow' + (s.arrows.in0 ? ' active-down' : '');
+      document.getElementById('arr1-in').className = 'arrow' + (s.arrows.in1 ? ' active-down' : '');
+      document.getElementById('arr0-out').className = 'arrow' + (s.arrows.out0 ? ' active-up' : '');
+      document.getElementById('arr1-out').className = 'arrow' + (s.arrows.out1 ? ' active-up' : '');
+
+      // Timeline
+      ['tma', 'tc'].forEach(track => {
+        const el = document.getElementById('track-' + track);
+        el.innerHTML = '<div class="time-marker" style="left:' + (s.time / TOTAL * 100) + '%"></div>';
+        (s[track] || []).forEach(bar => {
+          const div = document.createElement('div');
+          div.className = 'timeline-bar bar-' + bar.type;
+          div.style.left = (bar.start / TOTAL * 100) + '%';
+          div.style.width = ((bar.end - bar.start) / TOTAL * 100) + '%';
+          div.textContent = bar.label;
+          el.appendChild(div);
+        });
       });
 
-      document.getElementById('info').innerHTML = step.info;
+      // Warp Groups
+      const prodEl = document.getElementById('wg-producer');
+      const consEl = document.getElementById('wg-consumer');
+      const prod = s.producer || { active: false, status: 'Idle' };
+      const cons = s.consumer || { active: false, status: 'Idle' };
+
+      prodEl.className = 'warp-group producer' + (prod.active ? ' active' : '');
+      consEl.className = 'warp-group consumer' + (cons.active ? ' active' : '');
+      document.getElementById('producer-status').textContent = prod.status;
+      document.getElementById('consumer-status').textContent = cons.status;
+
+      document.getElementById('info').innerHTML = s.info;
     }
 
-    function next() {
-      current = (current + 1) % steps.length;
-      render();
-    }
-
-    function prev() {
-      current = (current - 1 + steps.length) % steps.length;
-      render();
-    }
-
+    function next() { current = (current + 1) % steps.length; render(); }
+    function prev() { current = (current - 1 + steps.length) % steps.length; render(); }
     function toggleAuto() {
       const btn = document.getElementById('autoBtn');
-      if (autoInterval) {
-        clearInterval(autoInterval);
-        autoInterval = null;
-        btn.textContent = '▶ Auto';
-      } else {
-        autoInterval = setInterval(next, 1500);
-        btn.textContent = '⏸ Stop';
-      }
+      if (autoInterval) { clearInterval(autoInterval); autoInterval = null; btn.textContent = '▶ Auto'; }
+      else { autoInterval = setInterval(next, 1800); btn.textContent = '⏸ Stop'; }
     }
-
     render();
   </script>
 </body>
