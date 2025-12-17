@@ -388,7 +388,7 @@
       <button onclick="prev()">← Prev</button>
       <button onclick="next()">Next →</button>
       <button onclick="toggleAuto()" id="autoBtn">▶ Auto</button>
-      <span class="step-label">Step <span id="stepNum">0</span>/12</span>
+      <span class="step-label">Step <span id="stepNum">0</span>/<span id="stepCount">0</span></span>
     </div>
 
     <!-- Warp Groups Section -->
@@ -456,10 +456,10 @@
   </div>
 
   <script>
-    const TOTAL = 16;
+    const TOTAL = 18;
 
     const steps = [
-      // Step 0: Kernel Launch - Initialization
+      // Step 0: Kernel Launch
       {
         time: 0,
         buf0: { fill: 0, cls: '', label: '', status: 'Empty', statusCls: '' },
@@ -469,224 +469,203 @@
         tc: [],
         producer: { active: false, status: 'Initializing...' },
         consumer: { active: false, status: 'Waiting' },
-        info: `<strong>🚀 Kernel Launch:</strong> Thread block starts, warp groups assigned roles.<br><strong>Producer WG:</strong> Will handle TMA loads/stores<br><strong>Consumer WG:</strong> Will run WGMMA on Tensor Cores`
+        info: `<strong>🚀 Kernel Launch:</strong> Thread block starts, warp groups assigned roles.<br><strong>Producer WG:</strong> Loading/Storing<br><strong>Consumer WG:</strong> WGMMA`
       },
-      // Step 1: Issue load for Buffer 0 first
+      // Step 1: TMA Load B0
       {
-        time: 0,
-        buf0: { fill: 20, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
+        time: 1.5,
+        buf0: { fill: 50, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
         buf1: { fill: 0, cls: '', label: '', status: 'Empty', statusCls: '' },
         arrows: { in0: true },
-        tma: [{ start: 0, end: 2, type: 'load', label: 'Load B0' }],
+        tma: [{ start: 0, end: 3, type: 'load', label: 'Load B0' }],
         tc: [],
         producer: { active: true, status: 'TMA Load B0' },
         consumer: { active: false, status: 'Waiting barrier' },
-        info: `<strong>T0:</strong> Producer WG issues <code>cp.async(buf0)</code> — instruction instant, TMA starts loading B0.<br>Consumer WG blocked on <code>barrier.wait()</code>.`
+        info: `<strong>T0:</strong> Producer WG issues <code>cp.async(buf0)</code>. TMA starts filling B0.`
       },
-      // Step 1: Issue load for Buffer 1 (B0 already ahead)
+      // Step 2: TMA Load B1
       {
-        time: 0.5,
-        buf0: { fill: 40, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
+        time: 2,
+        buf0: { fill: 66, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
         buf1: { fill: 15, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
         arrows: { in0: true, in1: true },
         tma: [
-          { start: 0, end: 2, type: 'load', label: 'Load B0' },
-          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' }
+          { start: 0, end: 3, type: 'load', label: 'Load B0' },
+          { start: 1, end: 6, type: 'load', label: 'Load B1' }
         ],
         tc: [],
         producer: { active: true, status: 'TMA Load B0+B1' },
         consumer: { active: false, status: 'Waiting barrier' },
-        info: `<strong>T0.5:</strong> Producer WG issues <code>cp.async(buf1)</code> — B1 starts loading.<br>Consumer WG still waiting on barrier.`
+        info: `<strong>T1:</strong> Producer WG issues <code>cp.async(buf1)</code>. Both loads now in flight.`
       },
-      // Step 2: B0 continues loading faster
+      // Step 3: B0 Ready, Start Compute B0
       {
-        time: 1.5,
-        buf0: { fill: 80, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
-        buf1: { fill: 50, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
-        arrows: { in0: true, in1: true },
+        time: 3,
+        buf0: { fill: 100, cls: 'has-data', label: 'DATA', status: 'Ready', statusCls: '' },
+        buf1: { fill: 40, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
+        arrows: { in1: true },
         tma: [
-          { start: 0, end: 2, type: 'load', label: 'Load B0' },
-          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' }
+          { start: 0, end: 3, type: 'load', label: 'Load B0' },
+          { start: 1, end: 6, type: 'load', label: 'Load B1' }
         ],
         tc: [],
-        producer: { active: true, status: 'TMA in progress' },
-        consumer: { active: false, status: 'Waiting barrier' },
-        info: `<strong>T1.5:</strong> Producer WG TMA ops in progress. B0 almost ready.<br>Consumer WG blocked on <code>mbarrier.wait(buf0)</code>.`
+        producer: { active: true, status: 'TMA Load B1' },
+        consumer: { active: false, status: 'Barrier release' },
+        info: `<strong>T3:</strong> B0 load complete! Barrier released, Consumer WG signaled.`
       },
-      // Step 3: B0 ready! Start compute on B0 while B1 still loading
+      // Step 4: OVERLAP - Compute B0 while B1 loads
       {
-        time: 2,
-        buf0: { fill: 100, cls: 'has-data', label: 'DATA', status: 'Ready', statusCls: '' },
+        time: 4.5,
+        buf0: { fill: 100, cls: 'computing', label: 'WGMMA', status: 'Computing...', statusCls: 'computing' },
         buf1: { fill: 70, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
         arrows: { in1: true },
         tma: [
-          { start: 0, end: 2, type: 'load', label: 'Load B0' },
-          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' }
+          { start: 0, end: 3, type: 'load', label: 'Load B0' },
+          { start: 1, end: 6, type: 'load', label: 'Load B1' }
         ],
-        tc: [],
-        producer: { active: true, status: 'TMA Load B1' },
-        consumer: { active: false, status: 'Barrier released!' },
-        info: `<strong>T2:</strong> B0 load complete! Barrier signals Consumer WG.<br>Producer WG continues loading B1.`
-      },
-      // Step 4: OVERLAP - Compute B0 while B1 still loading!
-      {
-        time: 2.3,
-        buf0: { fill: 100, cls: 'computing', label: 'WGMMA', status: 'Computing...', statusCls: 'computing' },
-        buf1: { fill: 85, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
-        arrows: { in1: true },
-        tma: [
-          { start: 0, end: 2, type: 'load', label: 'Load B0' },
-          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' }
-        ],
-        tc: [{ start: 2, end: 5, type: 'compute', label: 'WGMMA B0' }],
+        tc: [{ start: 3, end: 6, type: 'compute', label: 'WGMMA B0' }],
         producer: { active: true, status: 'TMA Load B1' },
         consumer: { active: true, status: 'WGMMA B0' },
-        info: `<strong>T2:</strong> Consumer WG issues <code>wgmma(buf0)</code> — Tensor Cores start!<br><span class="tag">PARALLEL</span> <strong>Producer loads B1 ∥ Consumer computes B0</strong>`
+        info: `<strong>T4.5:</strong> Consumer WG runs <code>wgmma(buf0)</code>.<br><span class="tag">PARALLEL</span> <strong>Producer loads B1 ∥ Consumer computes B0</strong>`
       },
-      // Step 5: B1 load completes, B0 still computing
+      // Step 5: SYNC POINT - B1 ready EXACTLY as B0 compute finishes
       {
-        time: 2.5,
-        buf0: { fill: 100, cls: 'computing', label: 'WGMMA', status: 'Computing...', statusCls: 'computing' },
+        time: 6,
+        buf0: { fill: 100, cls: 'has-data', label: 'RESULT', status: 'Done', statusCls: '' },
         buf1: { fill: 100, cls: 'has-data', label: 'DATA', status: 'Ready', statusCls: '' },
         arrows: {},
         tma: [
-          { start: 0, end: 2, type: 'load', label: 'Load B0' },
-          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' }
+          { start: 0, end: 3, type: 'load', label: 'Load B0' },
+          { start: 1, end: 6, type: 'load', label: 'Load B1' }
         ],
-        tc: [{ start: 2, end: 5, type: 'compute', label: 'WGMMA B0' }],
-        producer: { active: false, status: 'Idle' },
-        consumer: { active: true, status: 'WGMMA B0' },
-        info: `<strong>T2.5:</strong> Producer WG done loading. Consumer WG still computing B0.<br>Both buffers ready — perfect pipelining!`
+        tc: [{ start: 3, end: 6, type: 'compute', label: 'WGMMA B0' }],
+        producer: { active: false, status: 'Wait for signal' },
+        consumer: { active: false, status: 'Wait for B1' },
+        info: `<strong>T6:</strong> <span class="tag">TARGETED FIX</span> By the time B1 data is ready, B0 results are also ready. Perfect sync!`
       },
-      // Step 6: B0 compute done, start store B0 + compute B1
+      // Step 6: Start Compute B1 and Store B0
       {
-        time: 5,
+        time: 7,
         buf0: { fill: 100, cls: 'storing', label: 'RESULT', status: 'Storing...', statusCls: 'storing' },
         buf1: { fill: 100, cls: 'computing', label: 'WGMMA', status: 'Computing...', statusCls: 'computing' },
         arrows: { out0: true },
         tma: [
-          { start: 0, end: 2, type: 'load', label: 'Load B0' },
-          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' },
-          { start: 5, end: 7, type: 'store', label: 'Store B0' }
+          { start: 0, end: 3, type: 'load', label: 'Load B0' },
+          { start: 1, end: 6, type: 'load', label: 'Load B1' },
+          { start: 6, end: 10, type: 'store', label: 'Store B0' }
         ],
         tc: [
-          { start: 2, end: 5, type: 'compute', label: 'WGMMA B0' },
-          { start: 5, end: 8, type: 'compute', label: 'WGMMA B1' }
+          { start: 3, end: 6, type: 'compute', label: 'WGMMA B0' },
+          { start: 6, end: 9, type: 'compute', label: 'WGMMA B1' }
         ],
         producer: { active: true, status: 'TMA Store B0' },
         consumer: { active: true, status: 'WGMMA B1' },
-        info: `<strong>T5:</strong> Producer WG stores B0. Consumer WG starts on B1.<br><span class="tag">PARALLEL</span> Producer stores ∥ Consumer computes`
+        info: `<strong>T7:</strong> Producer stores B0 to GMEM while Consumer WG starts compute on B1.`
       },
-      // Step 7: Store B0 done, reload B0 while B1 still computing
+      // Step 7: B1 compute finishes while B0 store continues
       {
-        time: 7,
-        buf0: { fill: 40, cls: 'loading', label: '', status: 'Reloading...', statusCls: 'loading' },
-        buf1: { fill: 100, cls: 'computing', label: 'WGMMA', status: 'Computing...', statusCls: 'computing' },
-        arrows: { in0: true },
+        time: 9,
+        buf0: { fill: 100, cls: 'storing', label: 'RESULT', status: 'Storing...', statusCls: 'storing' },
+        buf1: { fill: 100, cls: 'has-data', label: 'RESULT', status: 'Done', statusCls: '' },
+        arrows: { out0: true },
         tma: [
-          { start: 0, end: 2, type: 'load', label: 'Load B0' },
-          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' },
-          { start: 5, end: 7, type: 'store', label: 'Store B0' },
-          { start: 7, end: 9, type: 'load', label: 'Load B0' }
+          { start: 0, end: 3, type: 'load', label: 'Load B0' },
+          { start: 1, end: 6, type: 'load', label: 'Load B1' },
+          { start: 6, end: 10, type: 'store', label: 'Store B0' }
         ],
         tc: [
-          { start: 2, end: 5, type: 'compute', label: 'WGMMA B0' },
-          { start: 5, end: 8, type: 'compute', label: 'WGMMA B1' }
+          { start: 3, end: 6, type: 'compute', label: 'WGMMA B0' },
+          { start: 6, end: 9, type: 'compute', label: 'WGMMA B1' }
         ],
-        producer: { active: true, status: 'TMA Load B0' },
-        consumer: { active: true, status: 'WGMMA B1' },
-        info: `<strong>T7:</strong> Producer WG reloads B0. Consumer WG continues B1.<br><span class="tag">PARALLEL</span> Producer loads ∥ Consumer computes`
+        producer: { active: true, status: 'TMA Store B0' },
+        consumer: { active: false, status: 'Wait for Store' },
+        info: `<strong>T9:</strong> <span class="tag">PHASE 1</span> B1 compute finishes, but B0 store is still in progress.`
       },
-      // Step 8: B1 compute done, store B1 while loading B0
+      // Step 8: Both buffers storing
       {
-        time: 8,
-        buf0: { fill: 70, cls: 'loading', label: '', status: 'Reloading...', statusCls: 'loading' },
+        time: 9.5,
+        buf0: { fill: 100, cls: 'storing', label: 'RESULT', status: 'Storing...', statusCls: 'storing' },
+        buf1: { fill: 100, cls: 'storing', label: 'RESULT', status: 'Storing...', statusCls: 'storing' },
+        arrows: { out0: true, out1: true },
+        tma: [
+          { start: 0, end: 3, type: 'load', label: 'Load B0' },
+          { start: 1, end: 6, type: 'load', label: 'Load B1' },
+          { start: 6, end: 10, type: 'store', label: 'Store B0' },
+          { start: 9, end: 13, type: 'store', label: 'Store B1' }
+        ],
+        tc: [
+          { start: 3, end: 6, type: 'compute', label: 'WGMMA B0' },
+          { start: 6, end: 9, type: 'compute', label: 'WGMMA B1' }
+        ],
+        producer: { active: true, status: 'TMA Store B0+B1' },
+        consumer: { active: false, status: 'Idle' },
+        info: `<strong>T9.5:</strong> <span class="tag">PHASE 2</span> Both buffers are now performing store operations simultaneously.`
+      },
+      // Step 9: B0 store ends, starts reloading B0 while B1 storing
+      {
+        time: 11,
+        buf0: { fill: 20, cls: 'loading', label: '', status: 'Reloading...', statusCls: 'loading' },
         buf1: { fill: 100, cls: 'storing', label: 'RESULT', status: 'Storing...', statusCls: 'storing' },
         arrows: { in0: true, out1: true },
         tma: [
-          { start: 0, end: 2, type: 'load', label: 'Load B0' },
-          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' },
-          { start: 5, end: 7, type: 'store', label: 'Store B0' },
-          { start: 7, end: 9, type: 'load', label: 'Load B0' },
-          { start: 8, end: 10, type: 'store', label: 'Store B1' }
+          { start: 0, end: 3, type: 'load', label: 'Load B0' },
+          { start: 1, end: 6, type: 'load', label: 'Load B1' },
+          { start: 6, end: 10, type: 'store', label: 'Store B0' },
+          { start: 9, end: 13, type: 'store', label: 'Store B1' },
+          { start: 10.5, end: 14.5, type: 'load', label: 'Load B0' }
         ],
         tc: [
-          { start: 2, end: 5, type: 'compute', label: 'WGMMA B0' },
-          { start: 5, end: 8, type: 'compute', label: 'WGMMA B1' }
+          { start: 3, end: 6, type: 'compute', label: 'WGMMA B0' },
+          { start: 6, end: 9, type: 'compute', label: 'WGMMA B1' }
         ],
-        producer: { active: true, status: 'TMA Load+Store' },
-        consumer: { active: false, status: 'Waiting' },
-        info: `<strong>T8:</strong> Producer WG: Load B0 + Store B1 simultaneously!<br><span class="tag">PARALLEL</span> Consumer WG waiting for next buffer`
+        producer: { active: true, status: 'TMA Reload B0' },
+        consumer: { active: false, status: 'Idle' },
+        info: `<strong>T11:</strong> <span class="tag">PHASE 3</span> B0 store ends. B0 begins reloading while B1 is still storing.`
       },
-      // Step 9: B0 ready, start compute B0 while storing B1
+      // Step 10: B1 store ends, starts reloading B1 while B0 reloading
       {
-        time: 9,
-        buf0: { fill: 100, cls: 'computing', label: 'WGMMA', status: 'Computing...', statusCls: 'computing' },
-        buf1: { fill: 100, cls: 'storing', label: 'RESULT', status: 'Storing...', statusCls: 'storing' },
-        arrows: { out1: true },
+        time: 14,
+        buf0: { fill: 80, cls: 'loading', label: '', status: 'Reloading...', statusCls: 'loading' },
+        buf1: { fill: 10, cls: 'loading', label: '', status: 'Reloading...', statusCls: 'loading' },
+        arrows: { in0: true, in1: true },
         tma: [
-          { start: 0, end: 2, type: 'load', label: 'Load B0' },
-          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' },
-          { start: 5, end: 7, type: 'store', label: 'Store B0' },
-          { start: 7, end: 9, type: 'load', label: 'Load B0' },
-          { start: 8, end: 10, type: 'store', label: 'Store B1' }
+          { start: 0, end: 3, type: 'load', label: 'Load B0' },
+          { start: 1, end: 6, type: 'load', label: 'Load B1' },
+          { start: 6, end: 10, type: 'store', label: 'Store B0' },
+          { start: 9, end: 13, type: 'store', label: 'Store B1' },
+          { start: 10.5, end: 14.5, type: 'load', label: 'Load B0' },
+          { start: 13.5, end: 17.5, type: 'load', label: 'Load B1' }
         ],
         tc: [
-          { start: 2, end: 5, type: 'compute', label: 'WGMMA B0' },
-          { start: 5, end: 8, type: 'compute', label: 'WGMMA B1' },
-          { start: 9, end: 12, type: 'compute', label: 'WGMMA B0' }
+          { start: 3, end: 6, type: 'compute', label: 'WGMMA B0' },
+          { start: 6, end: 9, type: 'compute', label: 'WGMMA B1' }
         ],
-        producer: { active: true, status: 'TMA Store B1' },
-        consumer: { active: true, status: 'WGMMA B0' },
-        info: `<strong>T9:</strong> Consumer WG starts WGMMA on B0.<br><span class="tag">PARALLEL</span> Producer stores B1 ∥ Consumer computes B0`
+        producer: { active: true, status: 'TMA Reload B0+B1' },
+        consumer: { active: false, status: 'Idle' },
+        info: `<strong>T14:</strong> <span class="tag">PHASE 4</span> B1 store ends, starts loading next tile. Both reloads in flight.`
       },
-      // Step 10: B1 store done, reload B1 while computing B0
+      // Step 11: B0 reload ends, starts compute B0 while B1 loading
       {
-        time: 10,
+        time: 16,
         buf0: { fill: 100, cls: 'computing', label: 'WGMMA', status: 'Computing...', statusCls: 'computing' },
-        buf1: { fill: 40, cls: 'loading', label: '', status: 'Reloading...', statusCls: 'loading' },
+        buf1: { fill: 60, cls: 'loading', label: '', status: 'Loading...', statusCls: 'loading' },
         arrows: { in1: true },
         tma: [
-          { start: 0, end: 2, type: 'load', label: 'Load B0' },
-          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' },
-          { start: 5, end: 7, type: 'store', label: 'Store B0' },
-          { start: 7, end: 9, type: 'load', label: 'Load B0' },
-          { start: 8, end: 10, type: 'store', label: 'Store B1' },
-          { start: 10, end: 12, type: 'load', label: 'Load B1' }
+          { start: 0, end: 3, type: 'load', label: 'Load B0' },
+          { start: 1, end: 6, type: 'load', label: 'Load B1' },
+          { start: 6, end: 10, type: 'store', label: 'Store B0' },
+          { start: 9, end: 13, type: 'store', label: 'Store B1' },
+          { start: 10.5, end: 14.5, type: 'load', label: 'Load B0' },
+          { start: 13.5, end: 17.5, type: 'load', label: 'Load B1' }
         ],
         tc: [
-          { start: 2, end: 5, type: 'compute', label: 'WGMMA B0' },
-          { start: 5, end: 8, type: 'compute', label: 'WGMMA B1' },
-          { start: 9, end: 12, type: 'compute', label: 'WGMMA B0' }
+          { start: 3, end: 6, type: 'compute', label: 'WGMMA B0' },
+          { start: 6, end: 9, type: 'compute', label: 'WGMMA B1' },
+          { start: 15, end: 18, type: 'compute', label: 'WGMMA B0' }
         ],
-        producer: { active: true, status: 'TMA Load B1' },
+        producer: { active: true, status: 'TMA Reload B1' },
         consumer: { active: true, status: 'WGMMA B0' },
-        info: `<strong>T10:</strong> Producer WG reloads B1. Consumer WG on B0.<br><span class="tag">PARALLEL</span> <strong>Steady state achieved!</strong>`
-      },
-      // Step 11: B0 compute done, B1 ready, swap!
-      {
-        time: 12,
-        buf0: { fill: 100, cls: 'storing', label: 'RESULT', status: 'Storing...', statusCls: 'storing' },
-        buf1: { fill: 100, cls: 'computing', label: 'WGMMA', status: 'Computing...', statusCls: 'computing' },
-        arrows: { out0: true },
-        tma: [
-          { start: 0, end: 2, type: 'load', label: 'Load B0' },
-          { start: 0.5, end: 2.5, type: 'load', label: 'Load B1' },
-          { start: 5, end: 7, type: 'store', label: 'Store B0' },
-          { start: 7, end: 9, type: 'load', label: 'Load B0' },
-          { start: 8, end: 10, type: 'store', label: 'Store B1' },
-          { start: 10, end: 12, type: 'load', label: 'Load B1' },
-          { start: 12, end: 14, type: 'store', label: 'Store B0' }
-        ],
-        tc: [
-          { start: 2, end: 5, type: 'compute', label: 'WGMMA B0' },
-          { start: 5, end: 8, type: 'compute', label: 'WGMMA B1' },
-          { start: 9, end: 12, type: 'compute', label: 'WGMMA B0' },
-          { start: 12, end: 15, type: 'compute', label: 'WGMMA B1' }
-        ],
-        producer: { active: true, status: 'TMA Store B0' },
-        consumer: { active: true, status: 'WGMMA B1' },
-        info: `<strong>T12:</strong> Producer stores B0. Consumer computes B1.<br><span class="tag">PARALLEL</span> <strong>Cycle repeats perfectly!</strong>`
+        info: `<strong>T16:</strong> <span class="tag">PHASE 5</span> B0 reload ends and computation restarts. Pipeline steady state!`
       },
     ];
 
@@ -696,6 +675,7 @@
     function render() {
       const s = steps[current];
       document.getElementById('stepNum').textContent = current;
+      document.getElementById('stepCount').textContent = steps.length - 1;
 
       // Buffers
       ['0', '1'].forEach(i => {
